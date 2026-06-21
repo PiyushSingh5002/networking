@@ -9,34 +9,101 @@ document.addEventListener('DOMContentLoaded', () => {
     const qrContainer = document.getElementById('qr-container');
     const upiAppBtns = document.querySelectorAll('.upi-app-btn');
     const successOverlay = document.getElementById('success-overlay');
-    const floatingElements = document.querySelector('.floating-elements');
 
-    // Handle double click for cake reveal
-    cakeBtn.addEventListener('dblclick', () => {
-        // Hide button, hide fireworks, show cake and next button
-        cakeBtn.style.display = 'none';
-        document.getElementById('fireworks-container').style.opacity = '0';
-        cakeReveal.classList.remove('hidden');
-        
-        // Small delay for smooth flow
-        setTimeout(() => {
-            giftBtn.classList.remove('hidden');
-            giftBtn.style.animation = 'bounceIn 0.8s forwards';
-        }, 500);
+    // ==========================================
+    // AMBIENT BACKGROUND PARTICLES (CANVAS)
+    // ==========================================
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationFrameId;
 
-        // Spawn cats and balloons!
-        spawnCatsAndBalloons();
-    });
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    // Handle single click feedback for "Give a cake"
-    cakeBtn.addEventListener('click', (e) => {
-        // If not double clicked, just a small jiggle
-        if(e.detail === 1) {
-            cakeBtn.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                cakeBtn.style.transform = 'scale(1)';
-            }, 150);
+    class Particle {
+        constructor() {
+            this.reset();
         }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = canvas.height + Math.random() * 100; // Start below screen
+            this.size = Math.random() * 2 + 0.5;
+            this.speed = Math.random() * 1 + 0.2;
+            this.opacity = Math.random() * 0.5 + 0.1;
+            // Golden hues
+            this.color = `rgba(212, 175, 55, ${this.opacity})`;
+            this.wobble = Math.random() * Math.PI * 2;
+            this.wobbleSpeed = Math.random() * 0.02 + 0.01;
+        }
+        update() {
+            this.y -= this.speed;
+            this.wobble += this.wobbleSpeed;
+            this.x += Math.sin(this.wobble) * 0.5;
+
+            if (this.y < -10) {
+                this.reset();
+            }
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            
+            // Add subtle glow
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.4)';
+        }
+    }
+
+    function initAmbientParticles() {
+        particles = [];
+        const count = window.innerWidth < 600 ? 30 : 60;
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle());
+            // Randomize initial Y so they aren't all at bottom
+            particles[i].y = Math.random() * canvas.height;
+        }
+    }
+
+    function animateAmbient() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+        animationFrameId = requestAnimationFrame(animateAmbient);
+    }
+    
+    initAmbientParticles();
+    animateAmbient();
+
+    // ==========================================
+    // UI INTERACTIONS
+    // ==========================================
+
+    // Elegant reveal surprise
+    cakeBtn.addEventListener('click', () => {
+        // Hide button gracefully
+        cakeBtn.style.opacity = '0';
+        cakeBtn.style.pointerEvents = 'none';
+        
+        setTimeout(() => {
+            cakeBtn.style.display = 'none';
+            cakeReveal.classList.remove('hidden');
+            triggerGoldenExplosion();
+            
+            // Show gift button after a moment
+            setTimeout(() => {
+                giftBtn.classList.remove('hidden');
+                giftBtn.style.animation = 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+            }, 1000);
+        }, 400);
     });
 
     // Screen transitions
@@ -50,27 +117,62 @@ document.addEventListener('DOMContentLoaded', () => {
         landingScreen.classList.add('active');
     });
 
-    // Payment interactions
+    // QR Code toggle
     qrPayBtn.addEventListener('click', () => {
         qrContainer.classList.toggle('hidden');
+        if (!qrContainer.classList.contains('hidden')) {
+            qrPayBtn.textContent = "Hide QR Code";
+        } else {
+            qrPayBtn.textContent = "Show QR Code";
+        }
     });
+
+    // ==========================================
+    // ELEGANT GOLDEN EXPLOSION (DOM PARTICLES)
+    // ==========================================
+    function triggerGoldenExplosion() {
+        const container = document.getElementById('landing-screen');
+        const numParticles = 40;
+        
+        for (let i = 0; i < numParticles; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('golden-particle');
+            
+            // Random properties for explosion
+            const size = Math.random() * 15 + 5;
+            const left = 50 + (Math.random() - 0.5) * 40; // Center weighted
+            const duration = 1.5 + Math.random() * 1.5;
+            const maxOpacity = 0.4 + Math.random() * 0.6;
+            
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${left}%`;
+            particle.style.bottom = `40%`;
+            particle.style.setProperty('--duration', `${duration}s`);
+            particle.style.setProperty('--maxOpacity', maxOpacity);
+            
+            // Add a slight horizontal drift via transform
+            const driftX = (Math.random() - 0.5) * 100;
+            particle.style.transform = `translateX(${driftX}px)`;
+            
+            container.appendChild(particle);
+            
+            // Cleanup
+            setTimeout(() => particle.remove(), duration * 1000);
+        }
+    }
 
     // ==========================================
     // ROBUST UPI PAYMENT IMPLEMENTATION
     // ==========================================
-
-    // 1. Payment Configuration Data
-    // Modify these values if your details change.
     const upiConfig = {
-        upiId: "chuphals074@okhdfcbank", // Your exact UPI ID
-        name: "Nitesh Lodu",             // Your Name
-        amount: "250",                   // Pre-filled amount (250)
-        note: "Birthday Gift",           // Transaction note
-        currency: "INR"                  // Currency must be INR
+        upiId: "chuphals074@okhdfcbank",
+        name: "Birthday Gift", 
+        amount: "500", // Suggested amount for premium feel
+        note: "A token of appreciation",
+        currency: "INR"
     };
 
-    // 2. Android Package Names for Fallbacks
-    // If the app is not installed, the Intent will redirect to the Play Store using these IDs.
     const appPackages = {
         gpay: "com.google.android.apps.nbu.paisa.user",
         phonepe: "com.phonepe.app",
@@ -78,9 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bhim: "in.org.npci.upiapp"
     };
 
-    // 3. Helper Function to generate the deep link
     function generateUpiLink(appId) {
-        // URLSearchParams safely encodes the URL parameters (like spaces in the note/name)
         const params = new URLSearchParams({
             pa: upiConfig.upiId,
             pn: upiConfig.name,
@@ -89,141 +189,51 @@ document.addEventListener('DOMContentLoaded', () => {
             cu: upiConfig.currency
         }).toString();
 
-        // Device detection using userAgent string
         const isAndroid = /android/i.test(navigator.userAgent);
         const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent);
 
         if (isAndroid && appId !== 'generic') {
-            // ANDROID: Use Intent URI. 
-            // Benefits: Opens the specific app directly. If not installed, falls back to Google Play Store.
             const pkg = appPackages[appId];
             const fallbackUrl = encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}`);
             return `intent://pay?${params}#Intent;scheme=upi;package=${pkg};S.browser_fallback_url=${fallbackUrl};end;`;
-        
         } else if (isIOS && appId !== 'generic') {
-            // iOS: Does not support the complex Intent fallback system.
-            // We must use specific URL schemes to open the apps directly.
             if (appId === 'phonepe') return `phonepe://pay?${params}`;
             if (appId === 'paytm') return `paytmmp://pay?${params}`;
             if (appId === 'gpay') return `gpay://upi/pay?${params}`;
-            
-            // If unknown iOS app, fallback to generic UPI scheme
             return `upi://pay?${params}`;
         } else {
-            // DESKTOP or 'Other' button: Use standard generic UPI link.
-            // On desktop, this will usually fail or ask for an associated program.
-            // That's why having the QR code scanner option is vital!
             return `upi://pay?${params}`;
         }
     }
 
-    // 4. Attach click listeners to all buttons
     upiAppBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
             const appId = btn.getAttribute('data-app');
             const targetUrl = generateUpiLink(appId);
-
-            // Execute the redirect by changing the window location
             window.location.href = targetUrl;
 
-            // Optional: Show the relaxing success tick animation after 3 seconds,
-            // simulating that they completed the payment in the app and returned.
+            // Simulate successful return from app
             setTimeout(() => {
                 showSuccess();
             }, 3000); 
         });
     });
 
-    function spawnCatsAndBalloons() {
-        const emojis = ['🎈', '🎉', '🎊', '✨', '🎂', '💖', '😻', '😹', '😸'];
-        const catGifUrls = [
-            'https://media.tenor.com/Z4w2Q8gB5sMAAAAi/cat-dance.gif',
-            'https://media.tenor.com/YwN-QeYwIigAAAAi/cat-dancing.gif'
-        ];
-
-        for (let i = 0; i < 25; i++) {
-            // Every 4th element is an actual dancing cat GIF
-            const isCatGif = i % 4 === 0;
-            const el = document.createElement(isCatGif ? 'img' : 'div');
-            el.classList.add(isCatGif ? 'cat-gif' : 'balloon');
-            
-            if (isCatGif) {
-                el.src = catGifUrls[Math.floor(Math.random() * catGifUrls.length)];
-            } else {
-                el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-            }
-            
-            // Random positioning and duration
-            el.style.left = `${Math.random() * 100}%`;
-            el.style.animationDuration = `${3 + Math.random() * 2}s`;
-            el.style.animationDelay = `${Math.random() * 0.5}s`;
-            
-            if (!isCatGif) {
-                el.style.fontSize = `${2 + Math.random() * 2}rem`;
-            }
-            
-            floatingElements.appendChild(el);
-
-            // Cleanup
-            setTimeout(() => {
-                el.remove();
-            }, 6000);
-        }
-    }
-
     function showSuccess() {
         successOverlay.classList.remove('hidden');
         setTimeout(() => {
-            // Optional: reset app state after showing success
             successOverlay.classList.add('hidden');
             paymentScreen.classList.remove('active');
             landingScreen.classList.add('active');
             
-            // Reset cake button
-            cakeBtn.style.display = 'inline-block';
+            // Reset state
+            cakeBtn.style.display = 'block';
+            cakeBtn.style.opacity = '1';
+            cakeBtn.style.pointerEvents = 'all';
             cakeReveal.classList.add('hidden');
             giftBtn.classList.add('hidden');
             qrContainer.classList.add('hidden');
-        }, 4000); // Show success for 4 seconds
+            qrPayBtn.textContent = "Show QR Code";
+        }, 4000);
     }
-    
-    // Add ripple effect to buttons
-    const buttons = document.querySelectorAll('.glass-btn, .pay-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            let x = e.clientX - e.target.getBoundingClientRect().left;
-            let y = e.clientY - e.target.getBoundingClientRect().top;
-            
-            let ripples = document.createElement('span');
-            ripples.style.left = x + 'px';
-            ripples.style.top = y + 'px';
-            ripples.style.position = 'absolute';
-            ripples.style.background = 'rgba(255,255,255,0.3)';
-            ripples.style.transform = 'translate(-50%, -50%)';
-            ripples.style.pointerEvents = 'none';
-            ripples.style.borderRadius = '50%';
-            ripples.style.animation = 'animateRipple 1s linear forwards';
-            
-            // Adding keyframes dynamically for ripple
-            if(!document.getElementById('ripple-style')) {
-                const style = document.createElement('style');
-                style.id = 'ripple-style';
-                style.innerHTML = `
-                    @keyframes animateRipple {
-                        0% { width: 0px; height: 0px; opacity: 0.5; }
-                        100% { width: 500px; height: 500px; opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            btn.style.position = 'relative';
-            btn.style.overflow = 'hidden';
-            this.appendChild(ripples);
-            
-            setTimeout(() => {
-                ripples.remove();
-            }, 1000);
-        });
-    });
 });
