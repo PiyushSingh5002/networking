@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Nitesh Lodu!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Landing Screen -->
+        <section id="landing-screen" class="screen active">
+            <div id="fireworks-container">
+                <div class="firework-emoji">🎆</div>
+                <div class="firework-emoji">🎇</div>
+                <div class="firework-emoji">🎆</div>
+                <div class="firework-emoji">🎇</div>
+            </div>
+            
+            <div class="floating-elements">
+                <!-- SVGs or emojis injected by JS for balloons/confetti -->
+            </div>
+            
+            <div class="content-container">
+                <h1 class="bounce-in">Happy Birthday<br><span class="highlight">Nitesh Lodu!</span></h1>
+                
+                <div class="action-area">
+                    <button id="cake-btn" class="glass-btn">Give a cake (Double Click)</button>
+                    
+                    <div id="cake-reveal" class="hidden">
+                        <div class="cake-emoji">🎂</div>
+                    </div>
+                    
+                    <button id="gift-btn" class="glass-btn primary hidden">Gift Now 🎁</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Payment Screen -->
+        <section id="payment-screen" class="screen">
+            <div class="content-container glass-panel">
+                <h2>Send a Gift</h2>
+                <p>Choose your preferred way to send some love!</p>
+                
+                <div class="payment-options">
+                    <div class="upi-apps-container">
+                        <p class="scan-text" style="margin-bottom: 10px; color: white;">Tap to open specific app:</p>
+                        <div class="upi-grid">
+                            <button class="pay-btn upi-app-btn gpay" data-app="gpay">GPay</button>
+                            <button class="pay-btn upi-app-btn phonepe" data-app="phonepe">PhonePe</button>
+                            <button class="pay-btn upi-app-btn paytm" data-app="paytm">Paytm</button>
+                            <button class="pay-btn upi-app-btn bhim" data-app="bhim">BHIM</button>
+                            <button class="pay-btn upi-app-btn other" data-app="generic" style="grid-column: span 2;">Other UPI Apps</button>
+                        </div>
+                    </div>
+                    
+                    <button class="pay-btn qr-btn" id="qr-pay-btn">
+                        Scan QR Code
+                    </button>
+                    <p class="small-text" style="text-align: center; margin-top: -5px; margin-bottom: 10px; max-width: 90%; line-height: 1.4;">
+                        * If the UPI buttons above are not working, you can directly scan the QR code or use the number/UPI ID below.
+                    </p>
+                    
+                    <div id="qr-container" class="hidden">
+                        <img src="assets/qr-code.png" alt="UPI QR Code" id="qr-img">
+                        <p class="scan-text">Scan with any UPI app</p>
+                    </div>
+
+                    <div class="bank-details">
+                        <p>Or send via Number:</p>
+                        <h3>+91 910 500 8108</h3>
+                        <p class="small-text">Account: chuphals074@okhdfcbank</p>
+                    </div>
+                </div>
+
+                <button id="back-btn" class="text-btn">← Back</button>
+            </div>
+        </section>
+
+        <!-- Success overlay -->
+        <div id="success-overlay" class="hidden">
+            <div class="tick-animation">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" />
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+                </svg>
+            </div>
+            <h2>Thank You!</h2>
+        </div>
+    </div>
+    
+    <script src="js/app.js"></script>
+</body>
+</html>
